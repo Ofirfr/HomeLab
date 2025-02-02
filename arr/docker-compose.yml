@@ -1,17 +1,19 @@
-services:                                     
+services:       
+                
   prowlarr:
     image: linuxserver/prowlarr:latest
     container_name: prowlarr
     hostname: prowlarr
     volumes:
-      - prowlarr_data:/config
-      - prowlarr_data:/data/Backup
-      - media_data:/downloads
+      - ${CONFIGS_PATH}Prowlarr/config:/config
+      - prowlarr_media:/data/Backup
+      - media_downloads:/downloads
     ports:
       - 9696:9696
     restart: unless-stopped
     env_file:
       - '.env'
+
   flaresolverr:
     image: flaresolverr/flaresolverr:latest
     container_name: flaresolverr
@@ -20,78 +22,79 @@ services:
       - 8191:8191
     restart: unless-stopped
     env_file:
-      - '.env'
+      - '.env' 
+
   sonarr:
     image: linuxserver/sonarr:latest
     container_name: sonarr
     hostname: sonarr
     volumes:
-      - sonarr_data:/config
-      - sonarr_data:/data/Backup
-      - sonarr_data:/data/tvshows
-      - media_data:/downloads
+      - ${CONFIGS_PATH}Sonarr/config:/config
+      - sonarr_media:/data/Backup
+      - sonarr_media:/data/tvshows
+      - media_downloads:/downloads
     ports:
       - 8989:8989
     restart: unless-stopped
     env_file:
       - '.env'
-      
+    
   radarr:
     image: linuxserver/radarr:latest
     container_name: radarr
     hostname: radarr
     volumes:
-      - radarr_data:/config
-      - radarr_data:/data/movies
-      - radarr_data:/data/Backup
-      - media_data:/downloads
+      - ${CONFIGS_PATH}Radarr/config:/config
+      - radarr_media:/data/movies
+      - radarr_media:/data/Backup
+      - media_downloads:/downloads
     ports:
       - 7878:7878
     restart: unless-stopped
     env_file:
       - '.env'
-                                               
+                                           
   lidarr:
     image: linuxserver/lidarr:latest
     container_name: lidarr
     hostname: lidarr
     volumes:
-      - lidarr_data:/config
-      - lidarr_data:/data/musicfolder
-      - media_data:/downloads
+      - ${CONFIGS_PATH}Lidarr/config:/config
+      - lidarr_media:/data/musicfolder
+      - media_downloads:/downloads
     ports:
       - 8686:8686
     restart: unless-stopped
     env_file:
       - '.env'
-                                                                                                                   
+                                                                                                               
   readarr:
     image: linuxserver/readarr:develop
     container_name: readarr
     hostname: readarr
     volumes:
-      - readarr_data:/config
-      - readarr_data:/data/books
-      - media_data:/downloads
+      - ${CONFIGS_PATH}Readarr/config:/config
+      - readarr_media:/data/books
+      - media_downloads:/downloads
     ports:
       - 8787:8787
     restart: unless-stopped
     env_file:
       - '.env'
-     
+ 
   homarr:
     container_name: homarr
     image: ghcr.io/homarr-labs/homarr:latest
     restart: unless-stopped
     volumes:
-      - homarr_data:/app/data/configs
-      - homarr_data:/app/public/icons
-      - homarr_data:/data
+      - ${CONFIGS_PATH}Homarr/configs:/app/data/configs
+      - ${CONFIGS_PATH}Homarr/icons:/app/public/icons
+      - ${CONFIGS_PATH}Homarr/data:/data
     ports:
       - '7575:7575'
     env_file:
       - '.env'
-   
+     
   jellyfin:
     image: linuxserver/jellyfin
     container_name: jellyfin
@@ -100,15 +103,15 @@ services:
       - '7359:7359/udp'   # Network discovery
       - '1900:1900/udp'   # DLNA port
     volumes:
-      - jellyfin_data:/config
-      - radarr_data:/data/Movies
-      - sonarr_data:/data/TVShows
-      - lidarr_data:/data/Music
-      - readarr_data:/data/Books
+      - ${CONFIGS_PATH}Jellyfin/config:/config
+      - radarr_media:/data/Movies
+      - sonarr_media:/data/TVShows
+      - lidarr_media:/data/Music
+      - readarr_media:/data/Books
     env_file:
       - '.env'
     restart: unless-stopped
-                                                                                                  
+                                                                                             
   qbittorrent:
     image: linuxserver/qbittorrent:latest
     container_name: qbittorrent
@@ -117,12 +120,12 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=false"
     volumes:
-      - qbittorrent_data:/config
-      - media_data:/downloads
+      - ${CONFIGS_PATH}qbittorrent/config:/config
+      - media_downloads:/downloads
     ports:
       - 8080:8080
-      - 6881:6881
-      - 6881:6881/udp
+      - ${QBITTORRENT_LISTEN_PORT}:${QBITTORRENT_LISTEN_PORT}
+      - ${QBITTORRENT_LISTEN_PORT}:${QBITTORRENT_LISTEN_PORT}/udp
     environment:
       - WEBUI_PORT=8080
       - TORRENTING_PORT=6881
@@ -132,72 +135,45 @@ services:
       - '.env'
 
 volumes:
-  prowlarr_data:
-    driver: local
-    driver_opts:
-      type: "none"
-      o: "bind"
-      device: "/arr/apps/prowlarr"
-
-  homarr_data:
-    driver: local
-    driver_opts:
-      type: "none"
-      o: "bind"
-      device: "/arr/apps/homarr"
-
-  media_data:
+  media_downloads:
     driver: local
     driver_opts:
       type: "nfs"
-      o: "addr=192.168.10.199,rw,nfsvers=3"
-      device: ":/mnt/single_disk_test/mnt/arr/apps/media"
-
-  qbittorrent_data:
+      o: "addr=192.168.10.199,rw,nfsvers=4"
+      device: ":/mnt/single_disk_test/mnt/arr_new/downloads/"
+  lidarr_media:
     driver: local
     driver_opts:
-      type: "none"
-      o: "bind"
-      device: "/arr/apps/qbittorrent"
-
-  jellyfin_data:
+      type: "nfs"
+      o: "addr=192.168.10.199,rw,nfsvers=4"
+      device: ":/mnt/single_disk_test/mnt/arr_new/lidarr/"
+  homarr_media:
     driver: local
     driver_opts:
-      type: "none"
-      o: "bind"
-      device: "/arr/apps/jellyfin"
-
-  radarr_data:
+      type: "nfs"
+      o: "addr=192.168.10.199,rw,nfsvers=4"
+      device: ":/mnt/single_disk_test/mnt/arr_new/homarr/"
+  prowlarr_media:
     driver: local
     driver_opts:
-      type: "none"
-      o: "bind"
-      device: "/arr/apps/radarr"
-
-  sonarr_data:
+      type: "nfs"
+      o: "addr=192.168.10.199,rw,nfsvers=4"
+      device: ":/mnt/single_disk_test/mnt/arr_new/prowlarr/"
+  sonarr_media:
     driver: local
     driver_opts:
-      type: "none"
-      o: "bind"
-      device: "/arr/apps/sonarr"
-
-  lidarr_data:
+      type: "nfs"
+      o: "addr=192.168.10.199,rw,nfsvers=4"
+      device: ":/mnt/single_disk_test/mnt/arr_new/sonarr/"
+  radarr_media:
     driver: local
     driver_opts:
-      type: "none"
-      o: "bind"
-      device: "/arr/apps/lidarr"
-
-  readarr_data:
+      type: "nfs"
+      o: "addr=192.168.10.199,rw,nfsvers=4"
+      device: ":/mnt/single_disk_test/mnt/arr_new/radarr/"
+  readarr_media:
     driver: local
     driver_opts:
-      type: "none"
-      o: "bind"
-      device: "/arr/apps/readarr"
-
-  bazarr_data:
-    driver: local
-    driver_opts:
-      type: "none"
-      o: "bind"
-      device: "/arr/apps/bazarr"
+      type: "nfs"
+      o: "addr=192.168.10.199,rw,nfsvers=4"
+      device: ":/mnt/single_disk_test/mnt/arr_new/readarr/"
