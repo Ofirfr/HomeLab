@@ -1,0 +1,203 @@
+services:                                     
+  prowlarr:
+    image: linuxserver/prowlarr:latest
+    container_name: prowlarr
+    hostname: prowlarr
+    volumes:
+      - prowlarr_data:/config
+      - prowlarr_data:/data/Backup
+      - media_data:/downloads
+    ports:
+      - 9696:9696
+    restart: unless-stopped
+    env_file:
+      - '.env'
+  flaresolverr:
+    image: flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    hostname: flaresolverr
+    ports:
+      - 8191:8191
+    restart: unless-stopped
+    env_file:
+      - '.env'
+  sonarr:
+    image: linuxserver/sonarr:latest
+    container_name: sonarr
+    hostname: sonarr
+    volumes:
+      - sonarr_data:/config
+      - sonarr_data:/data/Backup
+      - sonarr_data:/data/tvshows
+      - media_data:/downloads
+    ports:
+      - 8989:8989
+    restart: unless-stopped
+    env_file:
+      - '.env'
+      
+  radarr:
+    image: linuxserver/radarr:latest
+    container_name: radarr
+    hostname: radarr
+    volumes:
+      - radarr_data:/config
+      - radarr_data:/data/movies
+      - radarr_data:/data/Backup
+      - media_data:/downloads
+    ports:
+      - 7878:7878
+    restart: unless-stopped
+    env_file:
+      - '.env'
+                                               
+  lidarr:
+    image: linuxserver/lidarr:latest
+    container_name: lidarr
+    hostname: lidarr
+    volumes:
+      - lidarr_data:/config
+      - lidarr_data:/data/musicfolder
+      - media_data:/downloads
+    ports:
+      - 8686:8686
+    restart: unless-stopped
+    env_file:
+      - '.env'
+                                                                                                                   
+  readarr:
+    image: linuxserver/readarr:develop
+    container_name: readarr
+    hostname: readarr
+    volumes:
+      - readarr_data:/config
+      - readarr_data:/data/books
+      - media_data:/downloads
+    ports:
+      - 8787:8787
+    restart: unless-stopped
+    env_file:
+      - '.env'
+     
+  homarr:
+    container_name: homarr
+    image: ghcr.io/homarr-labs/homarr:latest
+    restart: unless-stopped
+    volumes:
+      - homarr_data:/app/data/configs
+      - homarr_data:/app/public/icons
+      - homarr_data:/data
+    ports:
+      - '7575:7575'
+    env_file:
+      - '.env'
+   
+  jellyfin:
+    image: linuxserver/jellyfin
+    container_name: jellyfin
+    ports:
+      - '8096:8096/tcp'   # Jellyfin web interface
+      - '7359:7359/udp'   # Network discovery
+      - '1900:1900/udp'   # DLNA port
+    volumes:
+      - jellyfin_data:/config
+      - radarr_data:/data/Movies
+      - sonarr_data:/data/TVShows
+      - lidarr_data:/data/Music
+      - readarr_data:/data/Books
+    env_file:
+      - '.env'
+    restart: unless-stopped
+                                                                                                  
+  qbittorrent:
+    image: linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    hostname: qbittorrent
+    restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+    volumes:
+      - qbittorrent_data:/config
+      - media_data:/downloads
+    ports:
+      - 8080:8080
+      - 6881:6881
+      - 6881:6881/udp
+    environment:
+      - WEBUI_PORT=8080
+      - TORRENTING_PORT=6881
+    healthcheck:
+      start_period: 15s
+    env_file:
+      - '.env'
+
+volumes:
+  prowlarr_data:
+    driver: local
+    driver_opts:
+      type: "none"
+      o: "bind"
+      device: "/arr/apps/prowlarr"
+
+  homarr_data:
+    driver: local
+    driver_opts:
+      type: "none"
+      o: "bind"
+      device: "/arr/apps/homarr"
+
+  media_data:
+    driver: local
+    driver_opts:
+      type: "nfs"
+      o: "addr=192.168.10.199,rw,nfsvers=3"
+      device: ":/mnt/single_disk_test/mnt/arr/apps/media"
+
+  qbittorrent_data:
+    driver: local
+    driver_opts:
+      type: "none"
+      o: "bind"
+      device: "/arr/apps/qbittorrent"
+
+  jellyfin_data:
+    driver: local
+    driver_opts:
+      type: "none"
+      o: "bind"
+      device: "/arr/apps/jellyfin"
+
+  radarr_data:
+    driver: local
+    driver_opts:
+      type: "none"
+      o: "bind"
+      device: "/arr/apps/radarr"
+
+  sonarr_data:
+    driver: local
+    driver_opts:
+      type: "none"
+      o: "bind"
+      device: "/arr/apps/sonarr"
+
+  lidarr_data:
+    driver: local
+    driver_opts:
+      type: "none"
+      o: "bind"
+      device: "/arr/apps/lidarr"
+
+  readarr_data:
+    driver: local
+    driver_opts:
+      type: "none"
+      o: "bind"
+      device: "/arr/apps/readarr"
+
+  bazarr_data:
+    driver: local
+    driver_opts:
+      type: "none"
+      o: "bind"
+      device: "/arr/apps/bazarr"
