@@ -111,24 +111,47 @@ services:
     env_file:
       - '.env'
     restart: unless-stopped
-                                                                                             
+  
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN  # Required for WireGuard
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1  # Disable IPv6 leaks
+    restart: unless-stopped
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - ${CONFIGS_PATH}gluetun:/gluetun  # Stores VPN configs and logs
+      - /wireguard:/gluetun/wireguard  # WireGuard config folder
+    environment:
+      - VPN_SERVICE_PROVIDER=custom
+      - VPN_TYPE=wireguard
+      - VPN_INTERFACE=wg0
+      - DOT=off
+      - FIREWALL_OUTBOUND_SUBNETS=192.168.10.0/24  # Allow LAN access to Web UI
+      - VPN_PORT_FORWARDING=off  # Enable AirVPN port forwarding
+    ports:
+      - "8080:8080"  # Web UI for qBittorrent
+      - "${VPN_PORT_FORWARDED}:6881"  # AirVPN forwarded port (REPLACE WITH YOUR PORT)
+      - "${VPN_PORT_FORWARDED}:6881/udp"  # AirVPN forwarded port for UDP (if supported)
+
   qbittorrent:
     image: linuxserver/qbittorrent:latest
     container_name: qbittorrent
-    hostname: qbittorrent
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    network_mode: "service:gluetun"
     restart: unless-stopped
     labels:
       - "com.centurylinklabs.watchtower.enable=false"
     volumes:
       - ${CONFIGS_PATH}qbittorrent/config:/config
       - media_downloads:/downloads
-    ports:
-      - 8080:8080
-      - ${QBITTORRENT_LISTEN_PORT}:${QBITTORRENT_LISTEN_PORT}
-      - ${QBITTORRENT_LISTEN_PORT}:${QBITTORRENT_LISTEN_PORT}/udp
     environment:
       - WEBUI_PORT=8080
-      - TORRENTING_PORT=6881
     healthcheck:
       start_period: 15s
     env_file:
