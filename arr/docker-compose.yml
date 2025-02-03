@@ -102,7 +102,7 @@ services:
     volumes:
       - ${CONFIGS_PATH}Homarr/configs:/app/data/configs
       - ${CONFIGS_PATH}Homarr/icons:/app/public/icons
-      - ${CONFIGS_PATH}Homarr/data:/data
+      - ${CONFIGS_PATH}Homarr/data:/appdata
     env_file:
       - '.env'
      
@@ -141,12 +141,14 @@ services:
       - VPN_TYPE=wireguard
       - VPN_INTERFACE=wg0
       - DOT=off
+      - HEALTH_VPN_DURATION_INITIAL=120s
+      - FIREWALL_VPN_INPUT_PORTS="${VPN_PORT_FORWARDED}"
       - FIREWALL_OUTBOUND_SUBNETS=192.168.10.0/24  # Allow LAN access to Web UI
       - VPN_PORT_FORWARDING=off  # Enable AirVPN port forwarding
     ports:
       - "8080:8080"  # Web UI for qBittorrent
-      - "${VPN_PORT_FORWARDED}:6881" # Port for qBittorrent
-      - "${VPN_PORT_FORWARDED}:6881/udp" # Port for qBittorrent
+      - "${VPN_PORT_FORWARDED}:${VPN_PORT_FORWARDED}" # Port for qBittorrent
+      - "${VPN_PORT_FORWARDED}:${VPN_PORT_FORWARDED}/udp" # Port for qBittorrent
       - "8686:8686" # Lidarr
       - "8989:8989" # Sonarr
       - "9696:9696" # Prowlarr
