@@ -3,7 +3,10 @@ services:
   prowlarr:
     image: linuxserver/prowlarr:latest
     container_name: prowlarr
-    hostname: prowlarr
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    network_mode: "service:gluetun"
     volumes:
       - ${CONFIGS_PATH}Prowlarr/config:/config
       - prowlarr_media:/data/Backup
@@ -17,9 +20,10 @@ services:
   flaresolverr:
     image: flaresolverr/flaresolverr:latest
     container_name: flaresolverr
-    hostname: flaresolverr
-    ports:
-      - 8191:8191
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    network_mode: "service:gluetun"
     restart: unless-stopped
     env_file:
       - '.env' 
@@ -27,14 +31,15 @@ services:
   sonarr:
     image: linuxserver/sonarr:latest
     container_name: sonarr
-    hostname: sonarr
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    network_mode: "service:gluetun"
     volumes:
       - ${CONFIGS_PATH}Sonarr/config:/config
       - sonarr_media:/data/Backup
       - sonarr_media:/data/tvshows
       - media_downloads:/downloads
-    ports:
-      - 8989:8989
     restart: unless-stopped
     env_file:
       - '.env'
@@ -42,56 +47,64 @@ services:
   radarr:
     image: linuxserver/radarr:latest
     container_name: radarr
-    hostname: radarr
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    network_mode: "service:gluetun"
     volumes:
       - ${CONFIGS_PATH}Radarr/config:/config
       - radarr_media:/data/movies
       - radarr_media:/data/Backup
       - media_downloads:/downloads
-    ports:
-      - 7878:7878
     restart: unless-stopped
     env_file:
       - '.env'
                                            
   lidarr:
     image: linuxserver/lidarr:latest
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    network_mode: "service:gluetun"
     container_name: lidarr
-    hostname: lidarr
     volumes:
       - ${CONFIGS_PATH}Lidarr/config:/config
       - lidarr_media:/data/musicfolder
       - media_downloads:/downloads
-    ports:
-      - 8686:8686
     restart: unless-stopped
     env_file:
       - '.env'
                                                                                                                
-  readarr:
-    image: linuxserver/readarr:develop
-    container_name: readarr
-    hostname: readarr
-    volumes:
-      - ${CONFIGS_PATH}Readarr/config:/config
-      - readarr_media:/data/books
-      - media_downloads:/downloads
-    ports:
-      - 8787:8787
-    restart: unless-stopped
-    env_file:
-      - '.env'
+  # readarr:
+  #   image: linuxserver/readarr:develop
+  #   depends_on:
+  #     gluetun:
+  #       condition: service_healthy
+  #   network_mode: "service:gluetun"
+  #   container_name: readarr
+  #   hostname: readarr
+  #   volumes:
+  #     - ${CONFIGS_PATH}Readarr/config:/config
+  #     - readarr_media:/data/books
+  #     - media_downloads:/downloads
+  #   ports:
+  #     - 8787:8787
+  #   restart: unless-stopped
+  #   env_file:
+  #     - '.env'
  
   homarr:
     container_name: homarr
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    network_mode: "service:gluetun"
     image: ghcr.io/homarr-labs/homarr:latest
     restart: unless-stopped
     volumes:
       - ${CONFIGS_PATH}Homarr/configs:/app/data/configs
       - ${CONFIGS_PATH}Homarr/icons:/app/public/icons
       - ${CONFIGS_PATH}Homarr/data:/data
-    ports:
-      - '7575:7575'
     env_file:
       - '.env'
      
@@ -134,8 +147,14 @@ services:
       - VPN_PORT_FORWARDING=off  # Enable AirVPN port forwarding
     ports:
       - "8080:8080"  # Web UI for qBittorrent
-      - "${VPN_PORT_FORWARDED}:6881"  # AirVPN forwarded port (REPLACE WITH YOUR PORT)
-      - "${VPN_PORT_FORWARDED}:6881/udp"  # AirVPN forwarded port for UDP (if supported)
+      - "${VPN_PORT_FORWARDED}:6881" # Port for qBittorrent
+      - "${VPN_PORT_FORWARDED}:6881/udp" # Port for qBittorrent
+      - "8686:8686" # Lidarr
+      - "8989:8989" # Sonarr
+      - "9696:9696" # Prowlarr
+      - "7575:7575" # Homarr
+      - "7878:7878" # Radarr
+      - "8191:8191" # FlareSolverr
 
   qbittorrent:
     image: linuxserver/qbittorrent:latest
