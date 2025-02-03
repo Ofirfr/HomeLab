@@ -11,8 +11,6 @@ services:
       - ${CONFIGS_PATH}Prowlarr/config:/config
       - prowlarr_media:/data/Backup
       - media_downloads:/downloads
-    ports:
-      - 9696:9696
     restart: unless-stopped
     env_file:
       - '.env'
@@ -112,7 +110,7 @@ services:
     image: linuxserver/jellyfin
     container_name: jellyfin
     ports:
-      - '8096:8096/tcp'   # Jellyfin web interface
+      - '80:8096/tcp'   # Jellyfin web interface
       - '7359:7359/udp'   # Network discovery
       - '1900:1900/udp'   # DLNA port
     volumes:
@@ -182,40 +180,40 @@ volumes:
     driver_opts:
       type: "nfs"
       o: "addr=192.168.10.199,rw,nfsvers=4"
-      device: ":/mnt/single_disk_test/mnt/arr_new/downloads/"
+      device: ":${NFS_SHARE_PATH}/downloads/"
   lidarr_media:
     driver: local
     driver_opts:
       type: "nfs"
       o: "addr=192.168.10.199,rw,nfsvers=4"
-      device: ":/mnt/single_disk_test/mnt/arr_new/lidarr/"
+      device: ":${NFS_SHARE_PATH}/lidarr/"
   homarr_media:
     driver: local
     driver_opts:
       type: "nfs"
       o: "addr=192.168.10.199,rw,nfsvers=4"
-      device: ":/mnt/single_disk_test/mnt/arr_new/homarr/"
+      device: ":${NFS_SHARE_PATH}/homarr/"
   prowlarr_media:
     driver: local
     driver_opts:
       type: "nfs"
       o: "addr=192.168.10.199,rw,nfsvers=4"
-      device: ":/mnt/single_disk_test/mnt/arr_new/prowlarr/"
+      device: ":${NFS_SHARE_PATH}/prowlarr/"
   sonarr_media:
     driver: local
     driver_opts:
       type: "nfs"
       o: "addr=192.168.10.199,rw,nfsvers=4"
-      device: ":/mnt/single_disk_test/mnt/arr_new/sonarr/"
+      device: ":${NFS_SHARE_PATH}/sonarr/"
   radarr_media:
     driver: local
     driver_opts:
       type: "nfs"
       o: "addr=192.168.10.199,rw,nfsvers=4"
-      device: ":/mnt/single_disk_test/mnt/arr_new/radarr/"
+      device: ":${NFS_SHARE_PATH}/radarr/"
   readarr_media:
     driver: local
     driver_opts:
       type: "nfs"
       o: "addr=192.168.10.199,rw,nfsvers=4"
-      device: ":/mnt/single_disk_test/mnt/arr_new/readarr/"
+      device: ":${NFS_SHARE_PATH}/readarr/"
