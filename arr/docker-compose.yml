@@ -110,7 +110,7 @@ services:
     image: linuxserver/jellyfin
     container_name: jellyfin
     ports:
-      - '80:8096/tcp'   # Jellyfin web interface
+      - '8096:8096/tcp'   # Jellyfin web interface
       - '7359:7359/udp'   # Network discovery
       - '1900:1900/udp'   # DLNA port
     volumes:
