@@ -28,7 +28,7 @@ services:
   certbot_init:
     image: certbot/certbot
     container_name: certbot-init
-    entrypoint: "/bin/sh -c 'certbot certonly --webroot -w /var/www/certbot -d jellyfin.local torrent.local && touch /etc/letsencrypt/.init_done'"
+    entrypoint: "/bin/sh -c 'certbot certonly --webroot -w /var/www/certbot -d jellyfin.local -d torrent.local && touch /etc/letsencrypt/.init_done'"
     volumes:
       - /nginx/certs:/etc/letsencrypt
       - /nginx/webroot:/var/www/certbot
