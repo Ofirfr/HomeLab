@@ -1,0 +1,48 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    volumes:
+      - redis_data:/data
+    networks:
+      - jellyplist-network
+  postgres:
+    container_name: postgres-jellyplist
+    image: postgres:17.2
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /data/postgres
+    volumes:
+       - /mnt/truenas/jellyfin/jellyplist/postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - jellyplist-network
+    restart: unless-stopped
+  
+  jellyplist:
+    container_name: jellyplist
+#    user: 103:105
+    image: ${IMAGE}
+    depends_on: 
+      - postgres
+      - redis
+    ports:
+      - "5055:5055"
+    networks:
+      - jellyplist-network
+    volumes:
+      - /mnt/truenas/jellyfin/jellyplist/cookies.txt:/jellyplist/cookies.txt
+      - /mnt/truenas/jellyfin/jellyplist/open.spotify.com_cookies.txt:/jellyplist/spotify-cookie.txt
+      - ${MUSIC_STORAGE_BASE_PATH}:${MUSIC_STORAGE_BASE_PATH}
+    env_file:
+      - .env
+
+networks:
+  jellyplist-network:
+    driver: bridge
+
+volumes:
+    postgres:
+    redis_data:
