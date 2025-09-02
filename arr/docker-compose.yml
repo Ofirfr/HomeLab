@@ -8,15 +8,15 @@ services:
         condition: service_healthy
     network_mode: "service:gluetun"
     volumes:
-      - ${CONFIGS_PATH}Prowlarr/config:/config
-      - prowlarr_media:/data/Backup
-      - media_downloads:/downloads
+      - ${CONFIGS_PATH}prowlarr/config:/config
+      - ${CONFIGS_PATH}prowlarr/backup:/data/Backup
+      - /home/ofirking/media/qbittorrent_downloads:/downloads
     restart: unless-stopped
     env_file:
       - '.env'
 
   flaresolverr:
-    image: flaresolverr/flaresolverr:latest
+    image: flaresolverr/flaresolverr:v3.3.24
     container_name: flaresolverr
     depends_on:
       gluetun:
@@ -34,10 +34,10 @@ services:
         condition: service_healthy
     network_mode: "service:gluetun"
     volumes:
-      - ${CONFIGS_PATH}Sonarr/config:/config
-      - sonarr_media:/data/Backup
-      - sonarr_media:/data/tvshows
-      - media_downloads:/downloads
+      - ${CONFIGS_PATH}sonarr/config:/config
+      - ${CONFIGS_PATH}sonarr:/data/Backup
+      - ${CONFIGS_PATH}sonarr/data:/data/tvshows
+      - /home/ofirking/media/qbittorrent_downloads:/downloads
     restart: unless-stopped
     env_file:
       - '.env'
@@ -50,10 +50,10 @@ services:
         condition: service_healthy
     network_mode: "service:gluetun"
     volumes:
-      - ${CONFIGS_PATH}Radarr/config:/config
-      - radarr_media:/data/movies
-      - radarr_media:/data/Backup
-      - media_downloads:/downloads
+      - ${CONFIGS_PATH}radarr/config:/config
+      - ${CONFIGS_PATH}radarr:/data/movies
+      - ${CONFIGS_PATH}radarr/data:/data/Backup
+      - /home/ofirking/media/qbittorrent_downloads:/downloads
     restart: unless-stopped
     env_file:
       - '.env'
@@ -66,9 +66,9 @@ services:
     network_mode: "service:gluetun"
     container_name: lidarr
     volumes:
-      - ${CONFIGS_PATH}Lidarr/config:/config
-      - lidarr_media:/data/musicfolder
-      - media_downloads:/downloads
+      - ${CONFIGS_PATH}lidarr/config:/config
+      - ${CONFIGS_PATH}lidarr/data:/data/musicfolder
+      - /home/ofirking/media/qbittorrent_downloads:/downloads
     restart: unless-stopped
     env_file:
       - '.env'
@@ -83,43 +83,51 @@ services:
   #   hostname: readarr
   #   volumes:
   #     - ${CONFIGS_PATH}Readarr/config:/config
-  #     - readarr_media:/data/books
-  #     - media_downloads:/downloads
+  #     - ${CONFIGS_PATH}readarr:/data/books
+  #     - /home/ofirking/media/qbittorrent_downloads:/downloads
   #   ports:
   #     - 8787:8787
   #   restart: unless-stopped
   #   env_file:
   #     - '.env'
  
-  homarr:
-    container_name: homarr
-    depends_on:
-      gluetun:
-        condition: service_healthy
-    network_mode: "service:gluetun"
-    image: ghcr.io/homarr-labs/homarr:latest
-    restart: unless-stopped
-    volumes:
-      - ${CONFIGS_PATH}Homarr/configs:/app/data/configs
-      - ${CONFIGS_PATH}Homarr/icons:/app/public/icons
-      - ${CONFIGS_PATH}Homarr/data:/appdata
-    env_file:
-      - '.env'
+  # homarr:
+  #   container_name: homarr
+  #   depends_on:
+  #     gluetun:
+  #       condition: service_healthy
+  #   network_mode: "service:gluetun"
+  #   image: ghcr.io/homarr-labs/homarr:latest
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ${CONFIGS_PATH}Homarr/configs:/app/data/configs
+  #     - ${CONFIGS_PATH}Homarr/icons:/app/public/icons
+  #     - ${CONFIGS_PATH}Homarr/data:/appdata
+  #   env_file:
+  #     - '.env'
      
   jellyfin:
     image: linuxserver/jellyfin
     container_name: jellyfin
+    devices:
+      # - /dev/dri
+      - /dev/dri/card0
+      - /dev/dri/renderD128:/dev/dri/renderD128
+    group_add:
+      - "109" # Change this to match your "render" host group id and remove this comment
+    
     ports:
       - '8096:8096/tcp'   # Jellyfin web interface
       - '7359:7359/udp'   # Network discovery
       - '1900:1900/udp'   # DLNA port
     volumes:
-      - ${CONFIGS_PATH}Jellyfin/config:/config
-      - radarr_media:/data/Movies
-      - sonarr_media:/data/TVShows
-      - lidarr_media:/data/Music
-      - readarr_media:/data/Books
-      - old_media:/data/old_music
+      - ${CONFIGS_PATH}jellyfin/config:/config
+      - ${CONFIGS_PATH}radarr:/data/Movies
+      - ${CONFIGS_PATH}sonarr:/data/TVShows
+      - ${CONFIGS_PATH}lidarr:/data/Music
+      - ${CONFIGS_PATH}readarr:/data/Books
+    environment:
+      - DOCKER_MODS=linuxserver/mods:jellyfin-opencl-intel
     env_file:
       - '.env'
     restart: unless-stopped
@@ -136,7 +144,7 @@ services:
       - /dev/net/tun:/dev/net/tun
     volumes:
       - ${CONFIGS_PATH}gluetun:/gluetun  # Stores VPN configs and logs
-      - /wireguard:/gluetun/wireguard  # WireGuard config folder
+      - /home/ofirking/wireguard:/gluetun/wireguard  # WireGuard config folder
     environment:
       - VPN_SERVICE_PROVIDER=custom
       - VPN_TYPE=wireguard
@@ -169,7 +177,7 @@ services:
       - "com.centurylinklabs.watchtower.enable=false"
     volumes:
       - ${CONFIGS_PATH}qbittorrent/config:/config
-      - media_downloads:/downloads
+      - /home/ofirking/media/qbittorrent_downloads:/downloads
     environment:
       - WEBUI_PORT=8080
     healthcheck:
@@ -177,52 +185,46 @@ services:
     env_file:
       - '.env'
 
-volumes:
-  media_downloads:
-    driver: local
-    driver_opts:
-      type: "nfs"
-      o: "addr=192.168.10.199,rw,nfsvers=4"
-      device: ":${NFS_SHARE_PATH}/downloads/"
-  lidarr_media:
-    driver: local
-    driver_opts:
-      type: "nfs"
-      o: "addr=192.168.10.199,rw,nfsvers=4"
-      device: ":${NFS_SHARE_PATH}/lidarr/"
-  homarr_media:
-    driver: local
-    driver_opts:
-      type: "nfs"
-      o: "addr=192.168.10.199,rw,nfsvers=4"
-      device: ":${NFS_SHARE_PATH}/homarr/"
-  prowlarr_media:
-    driver: local
-    driver_opts:
-      type: "nfs"
-      o: "addr=192.168.10.199,rw,nfsvers=4"
-      device: ":${NFS_SHARE_PATH}/prowlarr/"
-  sonarr_media:
-    driver: local
-    driver_opts:
-      type: "nfs"
-      o: "addr=192.168.10.199,rw,nfsvers=4"
-      device: ":${NFS_SHARE_PATH}/sonarr/"
-  radarr_media:
-    driver: local
-    driver_opts:
-      type: "nfs"
-      o: "addr=192.168.10.199,rw,nfsvers=4"
-      device: ":${NFS_SHARE_PATH}/radarr/"
-  readarr_media:
-    driver: local
-    driver_opts:
-      type: "nfs"
-      o: "addr=192.168.10.199,rw,nfsvers=4"
-      device: ":${NFS_SHARE_PATH}/readarr/"
-  old_media:
-    driver: local
-    driver_opts:
-      type: "nfs"
-      o: "addr=192.168.10.199,rw,nfsvers=4"
-      device: ":$/mnt/truenas/jellyfin/media/"
+# volumes:
+#   /home/ofirking/media/qbittorrent_downloads:
+#     driver: local
+#     driver_opts:
+#       type: none
+#       o: bind
+#       device: "${ARR_STACK_LOCAL_PATH}/qbittorrent_downloads"
+#   ${CONFIGS_PATH}lidarr:
+#     driver: local
+#     driver_opts:
+#       type: none
+#       o: bind
+#       device: "${ARR_STACK_LOCAL_PATH}/lidarr"
+#   homarr_media:
+#     driver: local
+#     driver_opts:
+#       type: none
+#       o: bind
+#       device: "${ARR_STACK_LOCAL_PATH}/homarr"
+#   prowlarr_media:
+#     driver: local
+#     driver_opts:
+#       type: none
+#       o: bind
+#       device: "${ARR_STACK_LOCAL_PATH}/prowlarr"
+#   ${CONFIGS_PATH}sonarr:
+#     driver: local
+#     driver_opts:
+#       type: none
+#       o: bind
+#       device: "${ARR_STACK_LOCAL_PATH}/sonarr"
+#   ${CONFIGS_PATH}radarr:
+#     driver: local
+#     driver_opts:
+#       type: none
+#       o: bind
+#       device: "${ARR_STACK_LOCAL_PATH}/radarr"
+#   ${CONFIGS_PATH}readarr:
+#     driver: local
+#     driver_opts:
+#       type: none
+#       o: bind
+#       device: "${ARR_STACK_LOCAL_PATH}/readarr"
