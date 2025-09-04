@@ -1,0 +1,17 @@
+services:
+  tailscale:
+    container_name: tailscale
+    image: tailscale/tailscale:latest
+    hostname: tnas-exit-node
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    volumes:
+      - ./state:/var/lib/tailscale
+    restart: unless-stopped
+    environment:
+      - TS_AUTHKEY=AUTH KEY HERE # Use your reusable auth key
+      - TS_EXTRA_ARGS=--advertise-exit-node --accept-routes
+      - TS_ROUTES=192.168.10.0/24 # Replace with your local network's CIDR
+      
