@@ -10,7 +10,7 @@ services:
     volumes:
       - ${CONFIGS_PATH}prowlarr/config:/config
       - ${CONFIGS_PATH}prowlarr/backup:/data/Backup
-      - /home/ofirking/media/qbittorrent_downloads:/downloads
+      - ${MEDIA_PATH}/qbittorrent_downloads:/downloads
     restart: unless-stopped
     env_file:
       - '.env'
@@ -37,7 +37,7 @@ services:
       - ${CONFIGS_PATH}sonarr/config:/config
       - ${CONFIGS_PATH}sonarr:/data/Backup
       - ${CONFIGS_PATH}sonarr/data:/data/tvshows
-      - /home/ofirking/media/qbittorrent_downloads:/downloads
+      - ${MEDIA_PATH}/qbittorrent_downloads:/downloads
     restart: unless-stopped
     env_file:
       - '.env'
@@ -53,7 +53,7 @@ services:
       - ${CONFIGS_PATH}radarr/config:/config
       - ${CONFIGS_PATH}radarr:/data/movies
       - ${CONFIGS_PATH}radarr/data:/data/Backup
-      - /home/ofirking/media/qbittorrent_downloads:/downloads
+      - ${MEDIA_PATH}/qbittorrent_downloads:/downloads
     restart: unless-stopped
     env_file:
       - '.env'
@@ -68,7 +68,24 @@ services:
     volumes:
       - ${CONFIGS_PATH}lidarr/config:/config
       - ${CONFIGS_PATH}lidarr/data:/data/musicfolder
-      - /home/ofirking/media/qbittorrent_downloads:/downloads
+      - ${MEDIA_PATH}/qbittorrent_downloads:/downloads
+    restart: unless-stopped
+    env_file:
+      - '.env'
+
+  bazarr:
+    image: linuxserver/bazarr:latest
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    network_mode: "service:gluetun"
+    container_name: bazarr
+    volumes:
+      - ${CONFIGS_PATH}bazarr/config:/config
+      - ${CONFIGS_PATH}bazarr/data:/data/musicfolder
+      - ${CONFIGS_PATH}sonarr/data:/data/tvshows
+      - ${CONFIGS_PATH}radarr/data:/data/movies
+      - ${MEDIA_PATH}/qbittorrent_downloads:/downloads
     restart: unless-stopped
     env_file:
       - '.env'
@@ -84,7 +101,7 @@ services:
   #   volumes:
   #     - ${CONFIGS_PATH}Readarr/config:/config
   #     - ${CONFIGS_PATH}readarr:/data/books
-  #     - /home/ofirking/media/qbittorrent_downloads:/downloads
+  #     - ${MEDIA_PATH}/qbittorrent_downloads:/downloads
   #   ports:
   #     - 8787:8787
   #   restart: unless-stopped
@@ -144,7 +161,7 @@ services:
       - /dev/net/tun:/dev/net/tun
     volumes:
       - ${CONFIGS_PATH}gluetun:/gluetun  # Stores VPN configs and logs
-      - /home/ofirking/wireguard:/gluetun/wireguard  # WireGuard config folder
+      - /Volume1/homes/ofirking/wireguard:/gluetun/wireguard  # WireGuard config folder
     environment:
       - VPN_SERVICE_PROVIDER=custom
       - VPN_TYPE=wireguard
@@ -163,6 +180,7 @@ services:
       - "9696:9696" # Prowlarr
       - "7575:7575" # Homarr
       - "7878:7878" # Radarr
+      - "6767:6767" # Bazarr
       - "8191:8191" # FlareSolverr
 
   qbittorrent:
@@ -177,54 +195,10 @@ services:
       - "com.centurylinklabs.watchtower.enable=false"
     volumes:
       - ${CONFIGS_PATH}qbittorrent/config:/config
-      - /home/ofirking/media/qbittorrent_downloads:/downloads
+      - ${MEDIA_PATH}/qbittorrent_downloads:/downloads
     environment:
       - WEBUI_PORT=8080
     healthcheck:
       start_period: 15s
     env_file:
       - '.env'
-
-# volumes:
-#   /home/ofirking/media/qbittorrent_downloads:
-#     driver: local
-#     driver_opts:
-#       type: none
-#       o: bind
-#       device: "${ARR_STACK_LOCAL_PATH}/qbittorrent_downloads"
-#   ${CONFIGS_PATH}lidarr:
-#     driver: local
-#     driver_opts:
-#       type: none
-#       o: bind
-#       device: "${ARR_STACK_LOCAL_PATH}/lidarr"
-#   homarr_media:
-#     driver: local
-#     driver_opts:
-#       type: none
-#       o: bind
-#       device: "${ARR_STACK_LOCAL_PATH}/homarr"
-#   prowlarr_media:
-#     driver: local
-#     driver_opts:
-#       type: none
-#       o: bind
-#       device: "${ARR_STACK_LOCAL_PATH}/prowlarr"
-#   ${CONFIGS_PATH}sonarr:
-#     driver: local
-#     driver_opts:
-#       type: none
-#       o: bind
-#       device: "${ARR_STACK_LOCAL_PATH}/sonarr"
-#   ${CONFIGS_PATH}radarr:
-#     driver: local
-#     driver_opts:
-#       type: none
-#       o: bind
-#       device: "${ARR_STACK_LOCAL_PATH}/radarr"
-#   ${CONFIGS_PATH}readarr:
-#     driver: local
-#     driver_opts:
-#       type: none
-#       o: bind
-#       device: "${ARR_STACK_LOCAL_PATH}/readarr"
