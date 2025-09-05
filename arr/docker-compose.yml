@@ -179,10 +179,11 @@ services:
       - /dev/net/tun:/dev/net/tun
     volumes:
       - ${CONFIGS_PATH}gluetun:/gluetun  # Stores VPN configs and logs
+      - /home/ofirking/openvpn:/gluetun/openvpn
     environment:
       - VPN_SERVICE_PROVIDER=custom
       - VPN_TYPE=openvpn
-      - OPENVPN_CONFIG=/gluetun/openvpn/custom.ovpn  # Path to your OpenVPN config
+      - OPENVPN_CUSTOM_CONFIG=/gluetun/openvpn/custom.ovpn  # Path to your OpenVPN config
       - DOT=off
       - HEALTH_VPN_DURATION_INITIAL=120s
       - FIREWALL_VPN_INPUT_PORTS="${VPN_PORT_FORWARDED}"
