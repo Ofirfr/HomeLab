@@ -171,35 +171,36 @@ services:
     image: qmcgaw/gluetun:latest
     container_name: gluetun
     cap_add:
-      - NET_ADMIN
+      - NET_ADMIN  # Required for WireGuard
     sysctls:
-      - net.ipv6.conf.all.disable_ipv6=1
+      - net.ipv6.conf.all.disable_ipv6=1  # Disable IPv6 leaks
     restart: unless-stopped
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
       - ${CONFIGS_PATH}gluetun:/gluetun  # Stores VPN configs and logs
-      - /home/ofirking/openvpn:/gluetun/openvpn
+      - /home/ofirking/wireguard:/gluetun/wireguard  # WireGuard config folder
     environment:
       - VPN_SERVICE_PROVIDER=custom
-      - VPN_TYPE=openvpn
-      - OPENVPN_CUSTOM_CONFIG=/gluetun/openvpn/custom.ovpn  # Path to your OpenVPN config
+      - VPN_TYPE=wireguard
+      - VPN_INTERFACE=wg0
       - DOT=off
       - HEALTH_VPN_DURATION_INITIAL=120s
       - FIREWALL_VPN_INPUT_PORTS="${VPN_PORT_FORWARDED}"
-      - FIREWALL_OUTBOUND_SUBNETS=192.168.10.0/24
-      - VPN_PORT_FORWARDING=off
+      - FIREWALL_OUTBOUND_SUBNETS=192.168.10.0/24  # Allow LAN access to Web UI
+      - VPN_PORT_FORWARDING=off  # Enable AirVPN port forwarding
     ports:
-      - "8080:8080"
-      - "${VPN_PORT_FORWARDED}:${VPN_PORT_FORWARDED}"
-      - "${VPN_PORT_FORWARDED}:${VPN_PORT_FORWARDED}/udp"
-      - "8686:8686"
-      - "8989:8989"
-      - "9696:9696"
-      - "7575:7575"
-      - "7878:7878"
-      - "6767:6767"
-      - "8191:8191"
+      - "8080:8080"  # Web UI for qBittorrent
+      - "8443:80"
+      - "${VPN_PORT_FORWARDED}:${VPN_PORT_FORWARDED}" # Port for qBittorrent
+      - "${VPN_PORT_FORWARDED}:${VPN_PORT_FORWARDED}/udp" # Port for qBittorrent
+      - "8686:8686" # Lidarr
+      - "8989:8989" # Sonarr
+      - "9696:9696" # Prowlarr
+      - "7575:7575" # Homarr
+      - "7878:7878" # Radarr
+      - "6767:6767" # Bazarr
+      - "8191:8191" # FlareSolverr
 
   qbittorrent:
     image: linuxserver/qbittorrent:latest
@@ -220,3 +221,35 @@ services:
       start_period: 15s
     env_file:
       - '.env'
+  speedtest-tracker-vpn:
+    image: lscr.io/linuxserver/speedtest-tracker:latest
+    container_name: speedtest-tracker-vpn
+    depends_on:
+      - gluetun
+    environment:
+      - PUID=65534
+      - PGID=65534
+      - SPEEDTEST_SCHEDULE=*/3 * * * *
+      - TZ=Asia/Jerusalem
+      - DB_CONNECTION=sqlite
+      - APP_KEY=${SPEED_TEST_KEY}
+    volumes:
+      - ${CONFIGS_PATH}speedtest-vpn:/config
+    restart: unless-stopped
+    network_mode: "service:gluetun"
+
+  speedtest-tracker-regular:
+    image: lscr.io/linuxserver/speedtest-tracker:latest
+    container_name: speedtest-tracker-regular
+    environment:
+      - PUID=65534
+      - PGID=65534
+      - SPEEDTEST_SCHEDULE=*/3 * * * *
+      - TZ=Asia/Jerusalem
+      - DB_CONNECTION=sqlite
+      - APP_KEY=${SPEED_TEST_KEY}
+    volumes:
+      - ${CONFIGS_PATH}speedtest-regular:/config
+    restart: unless-stopped
+    ports:
+      - 8444:80
