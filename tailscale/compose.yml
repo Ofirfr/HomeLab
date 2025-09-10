@@ -3,6 +3,7 @@ services:
     container_name: tailscale
     image: tailscale/tailscale:latest
     hostname: tnas-exit-node
+    network_mode: host
     cap_add:
       - NET_ADMIN
     devices:
