@@ -1,0 +1,18 @@
+[
+  {
+    "domain": "fr.jelly.com",
+    "target": "http://192.168.10.102:80"
+  },
+  {
+    "domain": "fr.sonarr.com",
+    "target": "http://192.168.10.102:8989"
+  },
+  {
+    "domain": "fr.qbit.com",
+    "target": "http://192.168.10.102:8080"
+  },
+  {
+    "domain": "fr.pi.com",
+    "target": "http://192.168.10.102:80"
+  }
+]

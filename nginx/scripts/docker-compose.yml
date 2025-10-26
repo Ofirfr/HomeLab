@@ -1,0 +1,49 @@
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx_proxy
+    restart: unless-stopped
+    network_mode: service:tailscale
+    volumes:
+      # Mounts the generated Nginx configurations
+      - ./data/nginx/conf.d:/etc/nginx/conf.d:ro
+      # Mounts the self-signed SSL certificates
+      - ./data/ssl:/etc/ssl/certs:ro
+    command: 'nginx -g "daemon off;"'
+
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    network_mode: service:tailscale
+    environment:
+      TZ: 'Asia/Jerusalem'
+      FTLCONF_webserver_api_password: 'niger'
+      FTLCONF_dns_listeningMode: 'all'
+    volumes:
+      - '../etc-pihole:/etc/pihole'
+    restart: unless-stopped
+  tailscale:
+    container_name: tailscale
+    image: tailscale/tailscale:latest
+    hostname: tnas-exit-node
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "8888:80/tcp"
+      - "4443:443/tcp"
+      # Uncomment the line below if you are using Pi-hole as your DHCP server
+      #- "67:67/udp"
+      # Uncomment the line below if you are using Pi-hole as your NTP server
+      #- "123:123/udp"
+    volumes:
+      - ../state:/var/lib/tailscale
+    restart: unless-stopped
+    environment:
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_AUTHKEY=tskey-auth-k26BQSz1yV11CNTRL-SkrVDSJwK4d1YuujRPmi4dcr9AzmT1SU # Use your reusable auth key
+      - TS_EXTRA_ARGS=--advertise-exit-node --accept-routes
+      - TS_ROUTES=192.168.10.0/24 # Replace with your local network's CIDR
