@@ -1,1 +1,2 @@
-/arr/.env
+.env
+!.env.example
