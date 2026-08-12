@@ -21,7 +21,7 @@ services:
     network_mode: service:tailscale
     environment:
       TZ: 'Asia/Jerusalem'
-      FTLCONF_webserver_api_password: 'niger'
+      FTLCONF_webserver_api_password: ${PIHOLE_PASSWORD:?set PIHOLE_PASSWORD in .env (see .env.example)}
       FTLCONF_dns_listeningMode: 'all'
     volumes:
       - './etc-pihole:/etc/pihole'
@@ -48,6 +48,6 @@ services:
     restart: unless-stopped
     environment:
       - TS_STATE_DIR=/var/lib/tailscale
-      - TS_AUTHKEY=AUTH KEY HERE # Use your reusable auth key
+      - TS_AUTHKEY=${TS_AUTHKEY:?set TS_AUTHKEY in .env (see .env.example)} # Reusable auth key, kept out of git
       - TS_EXTRA_ARGS=--advertise-exit-node --accept-routes
       - TS_ROUTES=192.168.10.0/24 # Replace with your local network's CIDR
