@@ -17,7 +17,7 @@ services:
     network_mode: service:tailscale
     environment:
       TZ: 'Asia/Jerusalem'
-      FTLCONF_webserver_api_password: 'niger'
+      FTLCONF_webserver_api_password: ${PIHOLE_PASSWORD:?set PIHOLE_PASSWORD in .env (see .env.example)}
       FTLCONF_dns_listeningMode: 'all'
     volumes:
       - '../etc-pihole:/etc/pihole'
